@@ -124,17 +124,34 @@
 # if __name__ == "__main__":
 #     chat_interface.launch()
 from fastapi import FastAPI
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel, SecuritySchemeType
+from fastapi.openapi.utils import get_openapi
+from fastapi.openapi.models import SecurityScheme
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.core.config import settings
 from app.expense.router import router as expense_router
 from app.chatbot.router import router as chat_router
 from app.income.router import router as income_router
+from app.auth.router import router as auth_router
 
 app = FastAPI(
     title="Personal Finance Bot API",
     version="1.0"
 )
 
-# Include routers
+# Optional: CORS settings if needed
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or specify your frontend domain(s)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include your routers
+app.include_router(auth_router)
 app.include_router(expense_router)
 app.include_router(chat_router, tags=["Chatbot"])
 app.include_router(income_router)
@@ -142,3 +159,28 @@ app.include_router(income_router)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Personal Finance Bot API"}
+
+# 👇 Inject global Bearer Auth to Swagger UI
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description="API for managing personal finance.",
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+        }
+    }
+    for path in openapi_schema["paths"].values():
+        for method in path.values():
+            method.setdefault("security", [{"BearerAuth": []}])
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi

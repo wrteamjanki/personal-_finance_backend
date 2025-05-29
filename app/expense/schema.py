@@ -16,3 +16,6 @@ class ExpenseUpdate(BaseModel):
 
 class ExpenseEntry(ExpenseCreate):
     id: int
+
+    class Config:
+        from_attributes = True

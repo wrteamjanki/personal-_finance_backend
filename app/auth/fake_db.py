@@ -1,5 +1,6 @@
 from app.auth.schemas import UserInDB
-from app.auth.service import get_password_hash
+# from app.auth.service import get_password_hash # Remove or comment out this line
+from app.auth.password_utils import get_password_hash # Add this line
 
 fake_users_db = {
     "testuser": UserInDB(

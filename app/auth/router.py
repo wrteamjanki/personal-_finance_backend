@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordRequestForm
 from app.auth.jwt_utils import create_access_token, verify_token
 from app.auth.service import authenticate_user
-from app.auth.schemas import Token, UserLogin, User
-from typing import Annotated
+from app.auth.schemas import Token, User
+from app.auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 @router.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -27,7 +25,7 @@ async def verify_token_endpoint(token: str):
     try:
         payload = verify_token(token)
         return {"valid": True, "username": payload.get("sub")}
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
@@ -35,22 +33,9 @@ async def verify_token_endpoint(token: str):
         )
 
 @router.get("/me", response_model=User)
-async def read_users_me(token: Annotated[str, Depends(oauth2_scheme)]):
-    try:
-        payload = verify_token(token)
-        username = payload.get("sub")
-        if username is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        # Here you would typically fetch the user from your database
-        # For now, we'll return a mock user
-        return {"username": username, "full_name": "Test User", "disabled": False}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+async def read_users_me(user: dict = Depends(get_current_user)):
+    return {
+        "username": user["username"],
+        "full_name": "Test User",
+        "disabled": False
+    }
