@@ -1,10 +1,17 @@
-from app.auth.utils import get_password_hash
+from app.auth.schemas import UserInDB
+from app.auth.service import get_password_hash
 
 fake_users_db = {
-    "boss": {
-        "username": "boss",
-        "full_name": "The Boss",
-        "hashed_password": get_password_hash("supersecretpassword"),
-        "disabled": False,
-    }
+    "testuser": UserInDB(
+        username="testuser",
+        full_name="Test User",
+        hashed_password=get_password_hash("testpass123"),
+        disabled=False
+    ),
+    "admin": UserInDB(
+        username="admin",
+        full_name="Admin User",
+        hashed_password=get_password_hash("admin123"),
+        disabled=False
+    )
 }

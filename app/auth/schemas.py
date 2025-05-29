@@ -18,3 +18,12 @@ class UserInDB(User):
 class UserLogin(BaseModel):
     username: str
     password: str
+
+# New schemas for email-based login
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"

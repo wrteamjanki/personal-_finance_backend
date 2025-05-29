@@ -1,15 +1,56 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
-from app.auth.jwt_utils import create_access_token
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from app.auth.jwt_utils import create_access_token, verify_token
 from app.auth.service import authenticate_user
+from app.auth.schemas import Token, UserLogin, User
+from typing import Annotated
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.post("/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+@router.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = await authenticate_user(form_data.username, form_data.password)
     if not user:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-    token = create_access_token(data={"sub": user["username"]})
-    return {"access_token": token, "token_type": "bearer"}
+    access_token = create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/verify-token")
+async def verify_token_endpoint(token: str):
+    try:
+        payload = verify_token(token)
+        return {"valid": True, "username": payload.get("sub")}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+@router.get("/me", response_model=User)
+async def read_users_me(token: Annotated[str, Depends(oauth2_scheme)]):
+    try:
+        payload = verify_token(token)
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        # Here you would typically fetch the user from your database
+        # For now, we'll return a mock user
+        return {"username": username, "full_name": "Test User", "disabled": False}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
