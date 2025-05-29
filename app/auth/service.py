@@ -1,6 +1,7 @@
 from passlib.context import CryptContext
 from app.auth.schemas import UserInDB
 from app.auth.fake_db import fake_users_db
+from app.auth.password import verify_password
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

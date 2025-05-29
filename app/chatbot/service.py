@@ -1,47 +1,84 @@
-import csv
+# app/api/chatbot/service.py
+
 import json
+import os
 import re
+import google.generativeai as genai
+from dotenv import load_dotenv
 from datetime import datetime
-from app.chatbot.prompt_template import build_prompt
-from app.utils.gemini import call_gemini
+from app.expense.schema import ExpenseCreate
+from app.expense.service import add_expense
 from app.chatbot.schema import ChatResponse
-import asyncio
 
-def parse_gemini_response(response_text: str) -> ChatResponse:
+load_dotenv()
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash")
+
+
+# Step 1: Build the smart prompt
+def build_prompt(user_message: str) -> str:
+    return f"""
+You are a smart and structured personal finance assistant in an app.
+
+Your task is to understand the user's intent and extract the following fields in proper JSON format.
+
+Always respond **only** with a JSON object — do NOT include any explanation, natural language, or triple backticks.
+
+---
+
+User message:
+"{user_message}"
+
+---
+
+Valid intents:
+- add_expense
+- add_income
+- delete_expense
+- get_summary
+- get_expense_by_category
+- get_income_summary
+
+---
+
+Example Output (format your response exactly like this):
+
+{{
+  "intent": "add_expense",
+  "amount": 500,
+  "category": "groceries",
+  "date": "2025-05-29",
+  "note": "milk and vegetables"
+}}
+
+If some values are not mentioned, omit them instead of guessing. Respond with only valid fields.
+"""
+# Step 2: Send to Gemini
+async def handle_chat(user_message: str) -> ChatResponse:
+    prompt = build_prompt(user_message)
+    response = model.generate_content(prompt)
+    text = response.text.strip()
+
+    # Clean JSON
+    cleaned = re.sub(r"```json|```", "", text).strip()
+
     try:
-        # Extract JSON object using regex
-        json_match = re.search(r"\{.*?\}", response_text, re.DOTALL)
-        if not json_match:
-            raise ValueError("No valid JSON object found in Gemini response.")
-
-        json_str = json_match.group(0)
-        json_data = json.loads(json_str)
-
+        data = json.loads(cleaned)
+    except json.JSONDecodeError:
         return ChatResponse(
-            type=json_data["type"].lower(),
-            amount=float(json_data["amount"]),
-            category=json_data["category"],
-            date=datetime.strptime(json_data["date"], "%Y-%m-%d").date(),
-            note=json_data.get("note", ""),
-            confirmation="Entry added successfully."
+            intent="error",
+            note="Failed to parse model response as JSON."
         )
-    except Exception as e:
-        print("❌ Gemini RAW response:\n", response_text)
-        raise ValueError(f"❌ Failed to parse Gemini response: {e}")
 
-def _write_to_csv(entry: ChatResponse):
-    filename = "data/expenses.csv" if entry.type == "expense" else "data/income_saving.csv"
-    with open(filename, mode="a", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow([entry.date, entry.amount, entry.category, entry.note])
+    # Get current date if not provided
+    if "date" not in data:
+        data["date"] = datetime.now().strftime("%Y-%m-%d")
 
-async def save_to_csv(entry: ChatResponse):
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, lambda: _write_to_csv(entry))
-
-async def handle_chat(message: str) -> ChatResponse:
-    prompt = build_prompt(message)
-    raw_response = await call_gemini(prompt)
-    entry = parse_gemini_response(raw_response)
-    await save_to_csv(entry)
-    return entry
+    # Create ChatResponse with safe field access
+    return ChatResponse(
+        intent=data.get("intent", "unknown"),
+        amount=data.get("amount"),
+        category=data.get("category"),
+        date=data.get("date"),
+        note=data.get("note")
+    )

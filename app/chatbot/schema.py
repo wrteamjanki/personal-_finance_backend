@@ -1,14 +1,14 @@
+# app/api/chatbot/schemas.py
+
 from pydantic import BaseModel
-from datetime import date
-from typing import Literal
+from typing import Optional
 
 class ChatRequest(BaseModel):
     message: str
 
 class ChatResponse(BaseModel):
-    type: Literal["expense", "income"]
-    amount: float
-    category: str
-    date: date
-    note: str
-    confirmation: str
+    intent: str
+    amount: float | None = None
+    category: str | None = None
+    date: str | None = None
+    note: str | None = None

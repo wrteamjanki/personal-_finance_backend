@@ -124,10 +124,9 @@
 # if __name__ == "__main__":
 #     chat_interface.launch()
 from fastapi import FastAPI
-from app.core.config import settings
 from app.expense.router import router as expense_router
-from app.chatbot.router import router as chat_router
 from app.income.router import router as income_router
+from app.chatbot.router import router as chat_router
 
 app = FastAPI(
     title="Personal Finance Bot API",
@@ -136,8 +135,8 @@ app = FastAPI(
 
 # Include routers
 app.include_router(expense_router)
-app.include_router(chat_router, tags=["Chatbot"])
 app.include_router(income_router)
+app.include_router(chat_router, prefix="/api/chatbot", tags=["Chatbot"])
 
 @app.get("/")
 def read_root():
