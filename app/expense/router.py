@@ -13,7 +13,6 @@ async def add_expense(entry: ExpenseCreate):
     return new_expense
 
 @router.get("/", response_model=List[ExpenseEntry])
-<<<<<<< HEAD
 async def get_expenses():
     expenses = await service.get_all_expenses()
     return expenses
