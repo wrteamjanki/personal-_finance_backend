@@ -12,7 +12,7 @@ from app.income.service import (
     get_income_categories,
 )
 
-from app.auth.dependencies import get_current_user
+# from app.auth.dependencies import get_current_user
 
 
 router = APIRouter(prefix="/income", tags=["Income"])
@@ -20,21 +20,21 @@ router = APIRouter(prefix="/income", tags=["Income"])
 
 @router.post("/", response_model=IncomeEntry)
 
-async def create_income(entry: IncomeCreate, token: str = Depends(get_current_user)):
+async def create_income(entry: IncomeCreate):
 
     return await add_income(entry)
 
 
 @router.get("/", response_model=List[IncomeEntry])
 
-async def read_all_income(token: str = Depends(get_current_user)):
+async def read_all_income():
 
     return await get_all_income()
 
 
 @router.delete("/{income_id}", response_model=dict)
 
-async def remove_income(income_id: int, token: str = Depends(get_current_user)):
+async def remove_income(income_id: int):
 
     success = await delete_income(income_id)
 
@@ -47,7 +47,7 @@ async def remove_income(income_id: int, token: str = Depends(get_current_user)):
 
 @router.put("/{income_id}", response_model=IncomeEntry)
 
-async def edit_income(income_id: int, entry: IncomeUpdate, token: str = Depends(get_current_user)):
+async def edit_income(income_id: int, entry: IncomeUpdate):
     try:
 
         return await update_income(income_id, entry)
@@ -59,7 +59,7 @@ async def edit_income(income_id: int, entry: IncomeUpdate, token: str = Depends(
 
 @router.get("/categories", response_model=List[str])
 
-async def income_categories(token: str = Depends(get_current_user)):
+async def income_categories():
 
     return await get_income_categories()
 

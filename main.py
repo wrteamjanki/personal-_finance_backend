@@ -134,7 +134,7 @@ from app.core.config import settings
 from app.expense.router import router as expense_router
 from app.income.router import router as income_router
 from app.chatbot.router import router as chat_router
-from app.auth.router import router as auth_router
+# from app.auth.router import router as auth_router
 
 app = FastAPI(
     title="Personal Finance Bot API",
@@ -151,7 +151,7 @@ app.add_middleware(
 )
 
 # Include your routers
-app.include_router(auth_router)
+# app.include_router(auth_router)
 app.include_router(expense_router)
 app.include_router(income_router)
 app.include_router(chat_router, prefix="/api/chatbot", tags=["Chatbot"])

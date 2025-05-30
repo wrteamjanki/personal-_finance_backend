@@ -9,7 +9,10 @@ class IncomeBase(BaseModel):
     note: Optional[str] = ""
 
 class IncomeCreate(IncomeBase):
-    pass
+    amount: float
+    category: str
+    date: date
+    note: Optional[str] = ""
 
 class IncomeUpdate(BaseModel):
     amount: Optional[float]
