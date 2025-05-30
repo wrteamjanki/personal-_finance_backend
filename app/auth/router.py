@@ -1,15 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-<<<<<<< HEAD
-from app.auth.jwt_utils import create_access_token
-from app.auth.service import authenticate_user
-from app.auth.schemas import Token
-=======
 from app.auth.jwt_utils import create_access_token, verify_token
 from app.auth.service import authenticate_user
 from app.auth.schemas import Token, User
 from app.auth.dependencies import get_current_user
->>>>>>> 58f2f395c5250be0b665bc36d0f6748b7045e8b2
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -25,8 +19,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
-<<<<<<< HEAD
-=======
 
 @router.post("/verify-token")
 async def verify_token_endpoint(token: str):
@@ -47,4 +39,3 @@ async def read_users_me(user: dict = Depends(get_current_user)):
         "full_name": "Test User",
         "disabled": False
     }
->>>>>>> 58f2f395c5250be0b665bc36d0f6748b7045e8b2

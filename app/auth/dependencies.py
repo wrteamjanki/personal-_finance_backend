@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# Removed oauth2_scheme and get_current_user functions
-=======
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -24,4 +21,3 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"
         )
->>>>>>> 58f2f395c5250be0b665bc36d0f6748b7045e8b2
