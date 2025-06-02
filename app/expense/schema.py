@@ -9,13 +9,17 @@ class ExpenseCreate(BaseModel):
     note: Optional[str] = ""
 
 class ExpenseUpdate(BaseModel):
-    amount: Optional[float]
-    category: Optional[str]
-    date: Optional[date]
+    amount: Optional[float] = None
+    category: Optional[str] = None
+    date: Optional[date] = None
     note: Optional[str] = ""
 
-class ExpenseEntry(ExpenseCreate):
+class ExpenseEntry(BaseModel):
     id: int
+    amount: float
+    category: str
+    date: date
+    note: Optional[str] = ""
 
     class Config:
         from_attributes = True

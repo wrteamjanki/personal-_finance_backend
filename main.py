@@ -124,22 +124,28 @@
 # if __name__ == "__main__":
 #     chat_interface.launch()
 from fastapi import FastAPI
-from fastapi.security import OAuth2PasswordBearer
-from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel, SecuritySchemeType
+# from fastapi.security import OAuth2PasswordBearer
+# from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel, SecuritySchemeType
 from fastapi.openapi.utils import get_openapi
-from fastapi.openapi.models import SecurityScheme
+# from fastapi.openapi.models import SecurityScheme
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.expense.router import router as expense_router
 from app.income.router import router as income_router
 from app.chatbot.router import router as chat_router
-# from app.auth.router import router as auth_router
+from app.db.database import engine, Base, get_async_session, AsyncSession
+from app.db.models import Expense, Income
+from init_db import init_db
+
 
 app = FastAPI(
     title="Personal Finance Bot API",
     version="1.0"
 )
+@app.on_event("startup")
+async def on_startup():
+    await init_db()
 
 # Optional: CORS settings if needed
 app.add_middleware(

@@ -1,8 +1,9 @@
 from app.expense.schema import ExpenseCreate
-from app.expense.service import add_expense
+from app.expense.service import add_expenses_bulk
 from app.income.schema import IncomeCreate
-from app.income.service import add_income
+from app.income.service import add_incomes_bulk
 from app.chatbot.schema import ChatResponse, ChatResponseList
+from app.db.database import get_async_session
 from datetime import datetime
 import json, re, os
 import google.generativeai as genai
@@ -68,6 +69,7 @@ Respond with valid fields only.
 """
 
 
+
 async def handle_chat(user_message: str) -> ChatResponseList:
     prompt = build_prompt(user_message)
     response = model.generate_content(prompt)
@@ -88,52 +90,32 @@ async def handle_chat(user_message: str) -> ChatResponseList:
 
     print("✅ Parsed JSON:", data)
 
-    responses = []
+    expense_entries = []
+    income_entries = []
+    fallbacks = []
 
     for entry in data:
         if "date" not in entry:
             entry["date"] = datetime.now().strftime("%Y-%m-%d")
 
         intent = entry.get("intent", "unknown").lower().strip()
-        print("🚨 Intent detected:", intent)
 
         if intent == "add_expense" and "amount" in entry and "category" in entry:
-            expense = ExpenseCreate(
+            expense_entries.append(ExpenseCreate(
                 amount=entry["amount"],
                 category=entry["category"],
                 date=datetime.strptime(entry["date"], "%Y-%m-%d").date(),
                 note=entry.get("note", "")
-            )
-            print("💾 Storing expense entry:", expense.dict())
-            stored = await add_expense(expense)
-            responses.append(ChatResponse(
-                intent=intent,
-                amount=stored.amount,
-                category=stored.category,
-                date=stored.date.strftime("%Y-%m-%d"),
-                note=stored.note
             ))
-
         elif intent == "add_income" and "amount" in entry and "category" in entry:
-            income = IncomeCreate(
+            income_entries.append(IncomeCreate(
                 amount=entry["amount"],
                 category=entry["category"],
                 date=datetime.strptime(entry["date"], "%Y-%m-%d").date(),
                 note=entry.get("note", "")
-            )
-            print("💾 Storing income entry:", income.dict())
-            stored = await add_income(income)
-            responses.append(ChatResponse(
-                intent=intent,
-                amount=stored.amount,
-                category=stored.category,
-                date=stored.date.strftime("%Y-%m-%d"),
-                note=stored.note
             ))
-
         else:
-            print("⚠️ Skipping invalid entry:", entry)
-            responses.append(ChatResponse(
+            fallbacks.append(ChatResponse(
                 intent=intent,
                 amount=entry.get("amount"),
                 category=entry.get("category"),
@@ -141,4 +123,29 @@ async def handle_chat(user_message: str) -> ChatResponseList:
                 note=entry.get("note", "Skipped due to missing data")
             ))
 
+    responses = []
+
+    # ✅ Fix here
+    async for db in get_async_session():
+        if expense_entries:
+            stored_expenses = await add_expenses_bulk(db, expense_entries)
+            responses.extend(ChatResponse(
+                intent="add_expense",
+                amount=exp.amount,
+                category=exp.category,
+                date=exp.date.strftime("%Y-%m-%d"),
+                note=exp.note
+            ) for exp in stored_expenses)
+
+        if income_entries:
+            stored_incomes = await add_incomes_bulk(db, income_entries)
+            responses.extend(ChatResponse(
+                intent="add_income",
+                amount=inc.amount,
+                category=inc.category,
+                date=inc.date.strftime("%Y-%m-%d"),
+                note=inc.note
+            ) for inc in stored_incomes)
+
+    responses.extend(fallbacks)
     return ChatResponseList(responses=responses)
