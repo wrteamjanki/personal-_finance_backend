@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, Date
+from sqlalchemy import Column, Integer, String, Float, Date, Boolean
 from app.db.database import Base
+
+# ------------------ Existing Models ------------------
 
 class Expense(Base):
     __tablename__ = "expenses"
@@ -18,3 +20,14 @@ class Income(Base):
     category = Column(String, nullable=False)
     date = Column(Date, nullable=False)
     note = Column(String, default="", nullable=True)
+
+# ------------------ NEW: User Model ------------------
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=True)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)

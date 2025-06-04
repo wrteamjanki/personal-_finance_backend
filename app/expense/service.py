@@ -7,7 +7,7 @@ from app.db.database import get_async_session
 from app.expense.schema import ExpenseCreate, ExpenseUpdate, ExpenseEntry
 from app.db import models
 
-async def add_expense(db: AsyncSession, entry: ExpenseCreate):
+async def add_expense(db: AsyncSession, user_id: int):
     new_expense = models.Expense(**entry.dict())
     db.add(new_expense)
     await db.commit()
@@ -16,7 +16,7 @@ async def add_expense(db: AsyncSession, entry: ExpenseCreate):
 
 
 async def get_all_expenses(session: AsyncSession = Depends(get_async_session)) -> List[ExpenseEntry]:
-    result = await session.execute(select(models.Expense))
+    result = await session.execute(select(Expence.user_id == user_id))
     expenses = result.scalars().all()
     return [ExpenseEntry.from_orm(exp) for exp in expenses]
 
