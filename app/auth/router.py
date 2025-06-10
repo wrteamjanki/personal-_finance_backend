@@ -26,4 +26,4 @@ async def login_user(
     token_data = {"sub": str(user.id)}
     access_token = create_access_token(token_data)
 
-    return TokenResponse(access_token=access_token)
+    return TokenResponse(access_token=access_token, token_type="bearer")

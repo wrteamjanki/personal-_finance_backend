@@ -19,7 +19,7 @@ class ExpenseEntry(BaseModel):
     amount: float
     category: str
     date: date
-    note: Optional[str] = ""
+    note: Optional[str] = None
 
     class Config:
         from_attributes = True

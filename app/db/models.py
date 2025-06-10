@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Date, Boolean
+from sqlalchemy import Column, Integer, String, Float, Date, Boolean, ForeignKey, func, select
 from app.db.database import Base
 
 # ------------------ Existing Models ------------------
@@ -7,6 +7,7 @@ class Expense(Base):
     __tablename__ = "expenses"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # 👈 Add this
     amount = Column(Float, nullable=False)
     category = Column(String, nullable=False)
     date = Column(Date, nullable=False)
@@ -16,6 +17,7 @@ class Income(Base):
     __tablename__ = "income"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # 👈 Add this
     amount = Column(Float, nullable=False)
     category = Column(String, nullable=False)
     date = Column(Date, nullable=False)

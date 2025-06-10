@@ -2,26 +2,29 @@ from pydantic import BaseModel
 from datetime import date
 from typing import Optional
 
-class IncomeBase(BaseModel):
+# class IncomeBase(BaseModel):
+#     amount: float
+#     category: str
+#     date: date
+#     note: Optional[str] = ""
+class IncomeCreate(BaseModel):
     amount: float
     category: str
     date: date
-    note: Optional[str] = ""
-
-class IncomeCreate(IncomeBase):
-    amount: float
-    category: str
-    date: date
-    note: Optional[str] = ""
+    note: Optional[str] = "" # Or Optional[str] = "" if you want empty string as default
 
 class IncomeUpdate(BaseModel):
-    amount: Optional[float]
-    category: Optional[str]
-    date: Optional[date]
-    note: Optional[str]
+    amount: Optional[float] = None
+    category: Optional[str] = None
+    date: Optional[date] = None
+    note: Optional[str] = ""
 
-class IncomeEntry(IncomeBase):
+class IncomeEntry(BaseModel):
     id: int
+    amount: float
+    category: str
+    date: date
+    note: Optional[str] = None
 
     class Config:
         from_attributes = True

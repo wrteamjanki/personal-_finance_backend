@@ -26,7 +26,7 @@
 #     except Exception as e:
 #         raise ValueError("⚠️ Could not parse Gemini response:\n" + str(e))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, APIRouter
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -34,27 +34,27 @@ from app.expense.router import router as expense_router
 from app.income.router import router as income_router
 from app.chatbot.router import router as chat_router
 from app.db.database import engine, Base, get_async_session, AsyncSession
-from app.db.models import Expense, Income
+from app.db.models import Expense, Income, User
 from init_db import init_db
 from app.auth.router import router as auth_router
-
+from app.auth.dependencies import get_current_user, User
 app = FastAPI(
     title="Personal Finance Bot API",
     version="1.0"
 )
 
-@app.on_event("startup")
-async def on_startup():
-    await init_db()
+# @app.on_event("startup")
+# async def on_startup():
+#     await init_db()
 
 # Optional: CORS settings if needed
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Or specify your frontend domain(s)
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  # Or specify your frontend domain(s)
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 # 👇 Include routers
 app.include_router(expense_router)
@@ -64,21 +64,49 @@ app.include_router(auth_router)
 print("Routes:")
 for route in app.routes:
     print(route.path)
-
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to Personal Finance Bot API"}
-
+# router = APIRouter(
+#     prefix="/test",
+#     tags=["Test"],
+#     dependencies=[Depends(get_current_user)]
+# )
+@app.get("/test-secure")
+async def test_secure(current_user: User = Depends(get_current_user)):
+    return {"message": f"Hello {current_user.email}"}
 # 👇 Inject global Bearer Auth to Swagger UI
+# def custom_openapi():
+#     if app.openapi_schema:
+#         return app.openapi_schema
+#     openapi_schema = get_openapi(
+#         title=app.title,
+#         version=app.version,
+#         description="API for managing personal finance.",
+#         routes=app.routes,
+#     )
+#     openapi_schema["components"]["securitySchemes"] = {
+#         "BearerAuth": {
+#             "type": "http",
+#             "scheme": "bearer",
+#             "bearerFormat": "JWT"
+#         }
+#     }
+#     for path in openapi_schema["paths"].values():
+#         for method in path.values():
+#             method.setdefault("security", [{"BearerAuth": []}])
+#     app.openapi_schema = openapi_schema
+#     return app.openapi_schema
+
+# app.openapi = custom_openapi
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
+
     openapi_schema = get_openapi(
         title=app.title,
         version=app.version,
-        description="API for managing personal finance.",
+        description="Backend APIs for the Quiz Platform",
         routes=app.routes,
     )
+
     openapi_schema["components"]["securitySchemes"] = {
         "BearerAuth": {
             "type": "http",
@@ -86,9 +114,11 @@ def custom_openapi():
             "bearerFormat": "JWT"
         }
     }
+
     for path in openapi_schema["paths"].values():
         for method in path.values():
-            method.setdefault("security", [{"BearerAuth": []}])
+            method.setdefault("security", []).append({"BearerAuth": []})
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 

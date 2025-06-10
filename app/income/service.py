@@ -9,14 +9,14 @@ from app.db.models import Income
 
 
 async def add_income(db: AsyncSession, entry: IncomeCreate):
-    new_income = Income(**entry.dict())
+    new_income = Income(**entry.dict(), user_id=user_id)
     db.add(new_income)
     await db.commit()
     await db.refresh(new_income)
     return new_income
 
 async def get_all_income(session: AsyncSession = Depends(get_async_session)) -> List[IncomeEntry]:
-    result = await session.execute(select(Income))
+    result = await session.execute(select(Income).where(Income.user_id == user_id))
     incomes = result.scalars().all()
     return [IncomeEntry.model_validate(inc) for inc in incomes]
 
