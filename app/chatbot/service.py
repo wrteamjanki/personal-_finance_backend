@@ -8,6 +8,7 @@ from datetime import datetime
 import json, re, os
 import google.generativeai as genai
 from dotenv import load_dotenv
+from sqlalchemy.ext.asyncio import AsyncSession
 
 load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -70,7 +71,7 @@ Respond with valid fields only.
 
 
 
-async def handle_chat(user_message: str) -> ChatResponseList:
+async def handle_chat(user_message: str,db: AsyncSession,user_id:int) -> ChatResponseList:
     prompt = build_prompt(user_message)
     response = model.generate_content(prompt)
     text = response.text.strip()
@@ -128,7 +129,7 @@ async def handle_chat(user_message: str) -> ChatResponseList:
     # ✅ Fix here
     async for db in get_async_session():
         if expense_entries:
-            stored_expenses = await add_expenses_bulk(db, expense_entries)
+            stored_expenses = await add_expenses_bulk(db, expense_entries,user_id= user_id)
             responses.extend(ChatResponse(
                 intent="add_expense",
                 amount=exp.amount,
@@ -138,7 +139,7 @@ async def handle_chat(user_message: str) -> ChatResponseList:
             ) for exp in stored_expenses)
 
         if income_entries:
-            stored_incomes = await add_incomes_bulk(db, income_entries)
+            stored_incomes = await add_incomes_bulk(db, income_entries, user_id=user_id)
             responses.extend(ChatResponse(
                 intent="add_income",
                 amount=inc.amount,

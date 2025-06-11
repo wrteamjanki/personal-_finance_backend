@@ -1,25 +1,24 @@
-from pydantic import BaseModel
-from datetime import date
+from pydantic import BaseModel,ConfigDict
+import datetime
 from typing import Optional
 
 class ExpenseCreate(BaseModel):
     amount: float
     category: str
-    date: date
+    date: datetime.date
     note: Optional[str] = ""
 
 class ExpenseUpdate(BaseModel):
     amount: Optional[float] = None
     category: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[datetime.date] = None
     note: Optional[str] = ""
-
+    
 class ExpenseEntry(BaseModel):
     id: int
     amount: float
     category: str
-    date: date
+    date: Optional[datetime.date] = None
     note: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

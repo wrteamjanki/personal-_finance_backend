@@ -48,7 +48,7 @@ async def get_categories(db: AsyncSession) -> List[str]:
     return list(set(categories))
 
 
-async def add_expenses_bulk(db: AsyncSession, entries: List[ExpenseCreate]):
+async def add_expenses_bulk(db: AsyncSession, entries: List[ExpenseCreate],user_id: int):
     new_expenses = [Expense(**entry.dict(), user_id=user_id) for entry in entries]
     db.add_all(new_expenses)
     await db.commit()
