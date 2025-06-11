@@ -33,6 +33,8 @@ from app.core.config import settings
 from app.expense.router import router as expense_router
 from app.income.router import router as income_router
 from app.chatbot.router import router as chat_router
+from app.summary.router import router as summary_router
+from app.saving.router import router as saving_router
 from app.db.database import engine, Base, get_async_session, AsyncSession
 from app.db.models import Expense, Income, User
 from init_db import init_db
@@ -43,32 +45,17 @@ app = FastAPI(
     version="1.0"
 )
 
-# @app.on_event("startup")
-# async def on_startup():
-#     await init_db()
-
-# Optional: CORS settings if needed
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],  # Or specify your frontend domain(s)
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-
 # 👇 Include routers
+app.include_router(auth_router)
+app.include_router(chat_router)
 app.include_router(expense_router)
 app.include_router(income_router)
-app.include_router(chat_router)
-app.include_router(auth_router)
+app.include_router(saving_router)
+app.include_router(summary_router)
 print("Routes:")
 for route in app.routes:
     print(route.path)
-# router = APIRouter(
-#     prefix="/test",
-#     tags=["Test"],
-#     dependencies=[Depends(get_current_user)]
-# )
+
 @app.get("/test-secure")
 async def test_secure(current_user: User = Depends(get_current_user)):
     return {"message": f"Hello {current_user.email}"}
