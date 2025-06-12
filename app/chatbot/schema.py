@@ -10,6 +10,7 @@ class ChatResponse(BaseModel):
     category: Optional[str] = None
     date: Optional[str] = None
     note: Optional[str] = None
+    reply: Optional[str] = None
 
 class ChatResponseList(BaseModel):
     responses: List[ChatResponse]
